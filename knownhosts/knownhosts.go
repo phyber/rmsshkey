@@ -3,7 +3,6 @@ package knownhosts
 import (
 	"bufio"
 	"os"
-	"path/filepath"
 
 	"github.com/phyber/rmsshkey/knownhost"
 )
@@ -13,12 +12,6 @@ type KnownHosts struct {
 	ch       chan *knownhost.KnownHost
 	chClosed bool
 	done     chan struct{}
-}
-
-func path() string {
-	home := os.Getenv("HOME")
-	path := filepath.Join(home, ".ssh", "known_hosts")
-	return path
 }
 
 func open() (*os.File, error) {
