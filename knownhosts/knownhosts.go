@@ -44,7 +44,7 @@ func (k *KnownHosts) closeKnownHosts() {
 
 // Returns a channel of knownhost.KnownHost that can be iterated over by
 // range.
-func (k *KnownHosts) Hosts() chan *knownhost.KnownHost {
+func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 	k.ch = make(chan *knownhost.KnownHost)
 	scanner := bufio.NewScanner(k.file)
 
