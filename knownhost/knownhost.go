@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	// HashMagic and HashDelim from hostfile.h in OpenSSH.
-	HashDelim = "|"
+	// HashMagic and hashDelim from hostfile.h in OpenSSH.
+	hashDelim = "|"
 	HashMagic = "|1|"
 
 	// Error texts are mostly copied from OpenSSH hostfile.c.
@@ -34,8 +34,8 @@ type KnownHost struct {
 
 // extractB64Len extracts the base64 length from a KnownHost entry.
 func (kh *KnownHost) extractB64Len() error {
-	// Ensure that string contains the HashDelim.
-	b64len := strings.Index(kh.entry, HashDelim)
+	// Ensure that string contains the hashDelim.
+	b64len := strings.Index(kh.entry, hashDelim)
 	if b64len == -1 {
 		return errors.New(errMissingHashDelim)
 	}
