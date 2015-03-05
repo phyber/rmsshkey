@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	// HashMagic and hashDelim from hostfile.h in OpenSSH.
+	// hashMagic and hashDelim from hostfile.h in OpenSSH.
 	hashDelim = "|"
-	HashMagic = "|1|"
+	hashMagic = "|1|"
 
 	// Error texts are mostly copied from OpenSSH hostfile.c.
 	errBadSaltLength          = "extract_salt: bad encoded salt length"
@@ -68,14 +68,14 @@ func (kh *KnownHost) extractSalt() error {
 // setup prepares the various entries in the KnownHost struct.
 func (kh *KnownHost) setup() error {
 	// Ensure that string is long enough.
-	lenHashMagic := len(HashMagic)
+	lenHashMagic := len(hashMagic)
 	lenentry := len(kh.entry)
 	if lenentry < lenHashMagic {
 		return errors.New(errStringTooShort)
 	}
 
-	// Ensure that HashMagic is present at the beginning of the entry
-	if !strings.HasPrefix(kh.entry, HashMagic) {
+	// Ensure that hashMagic is present at the beginning of the entry
+	if !strings.HasPrefix(kh.entry, hashMagic) {
 		return errors.New(errInvalidMagicIdentifier)
 	}
 
