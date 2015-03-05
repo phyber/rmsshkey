@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 )
 
+// path returns the path to the OpenSSH known_hosts file.
+// This function is platform specific.
 func path() string {
 	home := os.Getenv("HOME")
 	path := filepath.Join(home, ".ssh", "known_hosts")

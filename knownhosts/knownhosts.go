@@ -1,3 +1,6 @@
+// Package knownhosts provides a basic interface to the OpenSSH known_hosts
+// file.
+
 package knownhosts
 
 import (
@@ -14,6 +17,7 @@ type KnownHosts struct {
 	done     chan struct{}
 }
 
+// closeChannel closes KnownHosts.ch and sets KnownHosts.chClosed to true.
 func (k *KnownHosts) closeChannel() {
 	if !k.chClosed {
 		close(k.ch)
@@ -21,12 +25,15 @@ func (k *KnownHosts) closeChannel() {
 	}
 }
 
+// closeKnownHosts closes an open known_hosts file.
 func (k *KnownHosts) closeKnownHosts() {
 	if k.file != nil {
 		k.file.Close()
+		k.file = nil
 	}
 }
 
+// openKnownHosts opens a known_hosts file.
 func openKnownHosts() (*os.File, error) {
 	knownHostsPath := path()
 	file, err := os.Open(knownHostsPath)
@@ -36,8 +43,8 @@ func openKnownHosts() (*os.File, error) {
 	return file, nil
 }
 
-// Returns a channel of knownhost.KnownHost that can be iterated over by
-// range.
+// Hosts returns a channel of knownhost.KnownHost which can be iterated over
+// via range.
 func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 	k.ch = make(chan *knownhost.KnownHost)
 	k.done = make(chan struct{}, 2)
@@ -68,12 +75,15 @@ func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 	return k.ch
 }
 
+// Close closes all open channels and file handles opened by the package.
+// It also indicates to the "Hosts" goroutine that it should return.
 func (k *KnownHosts) Close() {
 	k.done <- struct{}{}
 	k.closeChannel()
 	k.closeKnownHosts()
 }
 
+// Open opens the OpenSSH known_hosts file and returns *KnownHosts.
 func Open() (*KnownHosts, error) {
 	k := &KnownHosts{}
 
