@@ -1,3 +1,6 @@
+// Package knownhost provides an interface for working with individual
+// known_hosts entries.
+
 package knownhost
 
 import (
@@ -13,6 +16,7 @@ const (
 	HashDelim = "|"
 	HashMagic = "|1|"
 
+	// Error texts are mostly copied from OpenSSH hostfile.c.
 	errBadSaltLength          = "extract_salt: bad encoded salt length"
 	errInvalidMagicIdentifier = "extract_salt: invalid magic identifier"
 	errInvalidSaltLen         = "extract_salt: invalid salt length after decode"
@@ -28,6 +32,7 @@ type KnownHost struct {
 	b64len int
 }
 
+// extractB64Len extracts the base64 length from a KnownHost entry.
 func (kh *KnownHost) extractB64Len() error {
 	// Ensure that string contains the HashDelim.
 	b64len := strings.Index(kh.entry, HashDelim)
@@ -46,18 +51,21 @@ func (kh *KnownHost) extractB64Len() error {
 	return nil
 }
 
+// extractHost extracts the host portion of a KnownHosts entry.
 func (kh *KnownHost) extractHost() error {
 	host := kh.entry[kh.b64len+1:]
 	kh.host = host
 	return nil
 }
 
+// extractSalt extracts the salt portion of a KnownHosts entry.
 func (kh *KnownHost) extractSalt() error {
 	salt := kh.entry[0:kh.b64len]
 	kh.salt = salt
 	return nil
 }
 
+// setup prepares the various entries in the KnownHost struct.
 func (kh *KnownHost) setup() error {
 	// Ensure that string is long enough.
 	lenHashMagic := len(HashMagic)
@@ -81,6 +89,8 @@ func (kh *KnownHost) setup() error {
 	return nil
 }
 
+// b64Hmac computes the base64 HMAC for a given host using the salt of the
+// current KnownHost entry.
 func (kh *KnownHost) b64Hmac(host string) (string, error) {
 	salt, err := kh.Salt()
 	if err != nil {
@@ -94,6 +104,7 @@ func (kh *KnownHost) b64Hmac(host string) (string, error) {
 	return base64.StdEncoding.EncodeToString(newMac), nil
 }
 
+// Equals checks if the provided host matches the current KnownHost.
 func (kh *KnownHost) Equals(host string) (bool, error) {
 	hostHash, err := kh.b64Hmac(host)
 	if err != nil {
@@ -102,10 +113,12 @@ func (kh *KnownHost) Equals(host string) (bool, error) {
 	return hostHash == kh.Host(), nil
 }
 
+// Host returns the Host portion of the KnownHost.
 func (kh *KnownHost) Host() string {
 	return kh.host
 }
 
+// Salt returns the decoded Salt portion of the KnownHost.
 func (kh *KnownHost) Salt() ([]byte, error) {
 	// Snip the b64 encoded salt out of the known_host line.
 	b64salt := kh.SaltB64()
@@ -125,10 +138,12 @@ func (kh *KnownHost) Salt() ([]byte, error) {
 	return data, nil
 }
 
+// SaltB64 returns the base64 encoded salt of the KnownHost
 func (kh *KnownHost) SaltB64() string {
 	return kh.salt
 }
 
+// New takes a raw known_hosts line and prepares a *KnownHost.
 func New(knownHost string) (*KnownHost, error) {
 	components := strings.Split(knownHost, " ")
 	if len(components) < 2 {
