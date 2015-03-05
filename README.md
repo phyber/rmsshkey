@@ -1,7 +1,7 @@
 # rmsshkey
 
-`rmsshkey` is a utility to remove a host an encrypted ~/.ssh/known_hosts along
-with all addresses that it resolves to.
+`rmsshkey` is a utility to remove a host an encrypted `~/.ssh/known_hosts`
+along with all addresses that it resolves to.
 
 ## Todo
 
