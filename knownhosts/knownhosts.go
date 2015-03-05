@@ -14,15 +14,6 @@ type KnownHosts struct {
 	done     chan struct{}
 }
 
-func open() (*os.File, error) {
-	knownHostsPath := path()
-	file, err := os.Open(knownHostsPath)
-	if err != nil {
-		return nil, err
-	}
-	return file, nil
-}
-
 func (k *KnownHosts) closeChannel() {
 	if !k.chClosed {
 		close(k.ch)
@@ -34,6 +25,15 @@ func (k *KnownHosts) closeKnownHosts() {
 	if k.file != nil {
 		k.file.Close()
 	}
+}
+
+func openKnownHosts() (*os.File, error) {
+	knownHostsPath := path()
+	file, err := os.Open(knownHostsPath)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }
 
 // Returns a channel of knownhost.KnownHost that can be iterated over by
@@ -77,7 +77,7 @@ func (k *KnownHosts) Close() {
 func Open() (*KnownHosts, error) {
 	k := &KnownHosts{}
 
-	file, err := open()
+	file, err := openKnownHosts()
 	if err != nil {
 		return nil, err
 	}
