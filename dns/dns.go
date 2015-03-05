@@ -1,3 +1,5 @@
+// Package dns provides basic DNS functions.
+
 package dns
 
 import "net"
