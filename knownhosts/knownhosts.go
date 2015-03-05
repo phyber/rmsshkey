@@ -12,6 +12,7 @@ type KnownHosts struct {
 	file     *os.File
 	ch       chan *knownhost.KnownHost
 	chClosed bool
+	done     chan struct{}
 }
 
 func path() string {
@@ -46,9 +47,16 @@ func (k *KnownHosts) closeKnownHosts() {
 // range.
 func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 	k.ch = make(chan *knownhost.KnownHost)
+	k.done = make(chan struct{}, 2)
 	scanner := bufio.NewScanner(k.file)
 
 	go func() {
+		select {
+		case <-k.done:
+			return
+		default:
+		}
+
 		for scanner.Scan() {
 			entry := scanner.Text()
 
@@ -68,6 +76,7 @@ func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 }
 
 func (k *KnownHosts) Close() {
+	k.done <- struct{}{}
 	k.closeChannel()
 	k.closeKnownHosts()
 }
