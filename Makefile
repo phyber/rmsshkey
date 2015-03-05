@@ -14,10 +14,14 @@ BINDIR=$(PREFIX)/bin
 #	DEBUILD_ARGS+=-ai386
 #endif
 
+ifeq ($(GOOS),windows)
+	EXECUTABLE="$(PKGNAME).exe"
+endif
+
 all: clean $(EXECUTABLE)
 
 $(EXECUTABLE):
-	$(GOBUILD) -o $@ $(PKGCMDDIR)/$(EXECUTABLE)/$(SOURCE)
+	$(GOBUILD) -o $@ $(PKGCMDDIR)/$(PKGNAME)/$(SOURCE)
 
 clean:
 	rm -f $(EXECUTABLE)
