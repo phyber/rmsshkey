@@ -4,17 +4,18 @@
 package knownhosts
 
 import (
-	"bufio"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/phyber/rmsshkey/knownhost"
 )
 
 type KnownHosts struct {
-	file     *os.File
-	ch       chan *knownhost.KnownHost
-	chClosed bool
-	done     chan struct{}
+	ch         chan *knownhost.KnownHost
+	done       chan struct{}
+	chClosed   bool
+	knownHosts []string
 }
 
 // closeChannel closes KnownHosts.ch and sets KnownHosts.chClosed to true.
@@ -22,14 +23,6 @@ func (k *KnownHosts) closeChannel() {
 	if !k.chClosed {
 		close(k.ch)
 		k.chClosed = true
-	}
-}
-
-// closeKnownHosts closes an open known_hosts file.
-func (k *KnownHosts) closeKnownHosts() {
-	if k.file != nil {
-		k.file.Close()
-		k.file = nil
 	}
 }
 
@@ -48,7 +41,7 @@ func openKnownHosts() (*os.File, error) {
 func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 	k.ch = make(chan *knownhost.KnownHost)
 	k.done = make(chan struct{}, 2)
-	scanner := bufio.NewScanner(k.file)
+	//scanner := bufio.NewScanner(k.file)
 
 	go func() {
 		select {
@@ -57,9 +50,7 @@ func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 		default:
 		}
 
-		for scanner.Scan() {
-			entry := scanner.Text()
-
+		for _, entry := range k.knownHosts {
 			kh, err := knownhost.New(entry)
 			if err != nil {
 				// TODO: Handle error
@@ -80,7 +71,6 @@ func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 func (k *KnownHosts) Close() {
 	k.done <- struct{}{}
 	k.closeChannel()
-	k.closeKnownHosts()
 }
 
 // Open opens the OpenSSH known_hosts file and returns *KnownHosts.
@@ -91,8 +81,14 @@ func Open() (*KnownHosts, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
-	k.file = file
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	k.knownHosts = strings.Split(string(data), "\n")
 
 	return k, nil
 }
