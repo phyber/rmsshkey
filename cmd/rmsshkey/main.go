@@ -1,25 +1,31 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
+	"github.com/jessevdk/go-flags"
 	"github.com/phyber/rmsshkey/dns"
 	"github.com/phyber/rmsshkey/knownhosts"
 )
 
-func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: knownhosts [host]\n")
-	flag.PrintDefaults()
-	os.Exit(2)
+var opts struct {
+	Verbose     bool `short:"v" long:"verbose" description:"Show verbose output."`
+	Interactive bool `short:"i" long:"interactive" description:"Confirm each key deletion."`
+	DryRun      bool `short:"n" long:"dry-run" description:"Show actions but do not perform them."`
+}
+
+func printf(format string, args ...interface{}) {
+	if opts.Verbose {
+		fmt.Printf(format, args...)
+	}
 }
 
 func main() {
-	flag.Usage = usage
-	flag.Parse()
-
-	args := flag.Args()
+	args, err := flags.Parse(&opts)
+	if err != nil {
+		os.Exit(1)
+	}
 
 	if len(args) < 1 {
 		fmt.Println("Please specify a host")
@@ -48,7 +54,7 @@ func main() {
 				fmt.Printf("Err looking for %q: %s\n", addr, err)
 			}
 			if found {
-				fmt.Printf("Found host %q in known_hosts\n", addr)
+				printf("Found host %q in known_hosts\n", addr)
 			}
 		}
 	}
