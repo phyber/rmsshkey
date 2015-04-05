@@ -3,10 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/phyber/rmsshkey/dns"
 	"github.com/phyber/rmsshkey/knownhosts"
+)
+
+const (
+	usage = "[OPTIONS] <HOST>"
 )
 
 var opts struct {
@@ -22,7 +27,9 @@ func printf(format string, args ...interface{}) {
 }
 
 func main() {
-	args, err := flags.Parse(&opts)
+	parser := flags.NewParser(&opts, flags.Default)
+	parser.Usage = usage
+	args, err := parser.Parse()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -39,6 +46,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(2)
 	}
+	printf("Addresses for %q: %s\n", host, strings.Join(addrs, ", "))
 
 	khs, err := knownhosts.Open()
 	if err != nil {
