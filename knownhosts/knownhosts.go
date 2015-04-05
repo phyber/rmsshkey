@@ -28,6 +28,7 @@ func (k *KnownHosts) closeChannel() {
 
 // openKnownHosts opens a known_hosts file.
 func openKnownHosts() (*os.File, error) {
+	// path() located in platform specific file.
 	knownHostsPath := path()
 	file, err := os.Open(knownHostsPath)
 	if err != nil {
@@ -71,6 +72,22 @@ func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 func (k *KnownHosts) Close() {
 	k.done <- struct{}{}
 	k.closeChannel()
+}
+
+// Remove removes a given host from the knownHosts array.
+func (k *KnownHosts) Remove(host string) error {
+	for i, entry := range k.knownHosts {
+		kh, err := knownhost.New(entry)
+		if err != nil {
+			// TODO: Handle it
+			continue
+		}
+		if kh.Host() == host {
+			k.knownHosts = append(k.knownHosts[:i], k.knownHosts[i:]...)
+			break
+		}
+	}
+	return nil
 }
 
 // Open opens the OpenSSH known_hosts file and returns *KnownHosts.
