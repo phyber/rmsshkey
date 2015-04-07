@@ -11,19 +11,12 @@ import (
 	"github.com/phyber/rmsshkey/knownhost"
 )
 
-type KnownHosts struct {
-	ch         chan *knownhost.KnownHost
-	done       chan struct{}
-	chClosed   bool
-	knownHosts []string
-}
+type empty struct{}
 
-// closeChannel closes KnownHosts.ch and sets KnownHosts.chClosed to true.
-func (k *KnownHosts) closeChannel() {
-	if !k.chClosed {
-		close(k.ch)
-		k.chClosed = true
-	}
+type KnownHosts struct {
+	done       chan empty
+	finished   bool
+	knownHosts []string
 }
 
 // openKnownHosts opens a known_hosts file.
@@ -40,16 +33,13 @@ func openKnownHosts() (*os.File, error) {
 // Hosts returns a channel of knownhost.KnownHost which can be iterated over
 // via range.
 func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
-	k.ch = make(chan *knownhost.KnownHost)
-	k.done = make(chan struct{}, 2)
-	//scanner := bufio.NewScanner(k.file)
+	out := make(chan *knownhost.KnownHost)
+	k.done = make(chan empty)
+	k.finished = false
 
 	go func() {
-		select {
-		case <-k.done:
-			return
-		default:
-		}
+		defer close(out)
+		defer k.Close()
 
 		for _, entry := range k.knownHosts {
 			kh, err := knownhost.New(entry)
@@ -58,20 +48,27 @@ func (k *KnownHosts) Hosts() <-chan *knownhost.KnownHost {
 				continue
 			}
 
-			k.ch <- kh
+			select {
+			case out <- kh:
+			case <-k.done:
+				return
+			}
 		}
-
-		k.closeChannel()
 	}()
-
-	return k.ch
+	return out
 }
 
 // Close closes all open channels and file handles opened by the package.
 // It also indicates to the "Hosts" goroutine that it should return.
 func (k *KnownHosts) Close() {
-	k.done <- struct{}{}
-	k.closeChannel()
+	if k.finished {
+		return
+	}
+	select {
+	case k.done <- empty{}:
+		k.finished = true
+	default:
+	}
 }
 
 // Remove removes a given host from the knownHosts array.
